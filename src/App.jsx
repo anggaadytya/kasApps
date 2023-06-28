@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import ModalCreate from "./components/Modal";
 import Alert from "./components/Alert";
-import axios from "axios";
 
 import "./App.css";
 
@@ -14,69 +13,30 @@ function App() {
   const [transaksiOut, setTransaksiOut] = useState(0);
   const [summary, setSummary] = useState([]);
 
-  const postData = async (data) => {
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/api/summary",
-        data
-      );
-      const savedSummary = response.data;
-
-      const newData = [...summary, savedSummary];
-      setSummary(newData);
-      localStorage.setItem("summary", JSON.stringify(newData));
-      const dataUangIn = newData.filter((items) => items.category === "IN");
-      const nominalUangIn = dataUangIn.map((items) => items.nominal);
-      const jumlahUangIn = nominalUangIn.reduce((total, num) => total + num, 0);
-
-      const dataUangOut = newData.filter((items) => items.category === "OUT");
-      const nominalUangOut = dataUangOut.map((items) => items.nominal);
-      const jumlahUangOut = nominalUangOut.reduce(
-        (total, num) => total + num,
-        0
-      );
-
-      setPemasukanUang(jumlahUangIn);
-      setTransaksiIn(nominalUangIn.length);
-
-      setPengeluaranUang(jumlahUangOut);
-      setTransaksiOut(nominalUangOut.length);
-
-      setSisaUang(jumlahUangIn - jumlahUangOut);
-      setPersentaseUang(((jumlahUangIn - jumlahUangOut) / jumlahUangIn) * 100); // Panggil fungsi hitung setelah menyimpan data baru
-    } catch (error) {
-      console.error(error);
+  const getData = () => {
+    const storedSummary = localStorage.getItem("summary");
+    if (storedSummary) {
+      setSummary(JSON.parse(storedSummary));
+      hitung();
+    } else {
+      setSummary([]);
+      localStorage.removeItem("summary");
     }
   };
 
-  const getData = async () => {
-    try {
-      const storedSummary = localStorage.getItem("summary");
-      if (storedSummary) {
-        setSummary(JSON.parse(storedSummary));
-        hitung();
-      } else {
-        const response = await axios.get("http://localhost:8000/api/summary");
-        const data = response.data;
-        if (data.length === 0) {
-          localStorage.removeItem("summary"); // Hapus data di penyimpanan lokal
-        } else {
-          setSummary(data);
-          localStorage.setItem("summary", JSON.stringify(data));
-          hitung();
-        }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const postData = (data) => {
+    const savedSummary = data;
 
-  const hitung = () => {
-    const dataUangIn = summary.filter((items) => items.category === "IN");
+    const newData = [...summary, savedSummary];
+    setSummary(newData);
+    localStorage.setItem("summary", JSON.stringify(newData));
+
+    // ...
+    const dataUangIn = newData.filter((items) => items.category === "IN");
     const nominalUangIn = dataUangIn.map((items) => items.nominal);
     const jumlahUangIn = nominalUangIn.reduce((total, num) => total + num, 0);
 
-    const dataUangOut = summary.filter((items) => items.category === "OUT");
+    const dataUangOut = newData.filter((items) => items.category === "OUT");
     const nominalUangOut = dataUangOut.map((items) => items.nominal);
     const jumlahUangOut = nominalUangOut.reduce((total, num) => total + num, 0);
 
@@ -90,7 +50,35 @@ function App() {
     setPersentaseUang(((jumlahUangIn - jumlahUangOut) / jumlahUangIn) * 100);
   };
 
+  const hitung = () => {
+    const storedSummary = localStorage.getItem("summary");
+    if (storedSummary) {
+      const data = JSON.parse(storedSummary);
+
+      const dataUangIn = data.filter((items) => items.category === "IN");
+      const nominalUangIn = dataUangIn.map((items) => items.nominal);
+      const jumlahUangIn = nominalUangIn.reduce((total, num) => total + num, 0);
+
+      const dataUangOut = data.filter((items) => items.category === "OUT");
+      const nominalUangOut = dataUangOut.map((items) => items.nominal);
+      const jumlahUangOut = nominalUangOut.reduce(
+        (total, num) => total + num,
+        0
+      );
+
+      setPemasukanUang(jumlahUangIn);
+      setTransaksiIn(nominalUangIn.length);
+
+      setPengeluaranUang(jumlahUangOut);
+      setTransaksiOut(nominalUangOut.length);
+
+      setSisaUang(jumlahUangIn - jumlahUangOut);
+      setPersentaseUang(((jumlahUangIn - jumlahUangOut) / jumlahUangIn) * 100);
+    }
+  };
+
   useEffect(() => {
+    hitung();
     getData();
   }, []);
 
