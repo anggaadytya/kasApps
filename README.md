@@ -1,3 +1,3 @@
 # kasApps
-# kasApps
-# kasApps
+# menggunakan LocalStorage
+
